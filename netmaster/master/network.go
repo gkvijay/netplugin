@@ -258,7 +258,7 @@ func attachServiceContainer(tenantName, networkName string, stateDriver core.Sta
 	log.Debugf("Container info: %+v\n Hostconfig: %+v", cinfo, cinfo.HostConfig)
 
 	// Trim default tenant
-	dnetName := docknet.GetDocknetName(tenantName, networkName, "")
+	dnetName := docknet.GetDocknetName(tenantName, networkName, "", "")
 
 	err = docker.ConnectNetwork(dnetName, contName)
 	if err != nil {
@@ -317,7 +317,7 @@ func detachServiceContainer(tenantName, networkName string) error {
 	}
 
 	// Trim default tenant
-	dnetName := docknet.GetDocknetName(tenantName, networkName, "")
+	dnetName := docknet.GetDocknetName(tenantName, networkName, "", "")
 
 	// inspect docker network
 	nwState, err := docker.InspectNetwork(dnetName)

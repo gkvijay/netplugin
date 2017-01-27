@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/contiv/netplugin/core"
 	"github.com/contiv/netplugin/netmaster/mastercfg"
@@ -76,25 +77,6 @@ func (s *DnetOperState) Clear() error {
 	return s.StateDriver.ClearState(key)
 }
 
-// GetDocknetName trims default tenant from network name
-func GetDocknetName(tenantName, networkName, epgName string) string {
-
-	netName := ""
-	// if epg is specified, always use that, else use nw
-	if epgName == "" {
-		netName = networkName
-	} else {
-		netName = epgName
-	}
-
-	// add tenant suffix if not the default tenant
-	if tenantName != defaultTenantName {
-		netName = netName + "/" + tenantName
-	}
-
-	return netName
-}
-
 // CreateDockNet Creates a network in docker daemon
 func CreateDockNet(tenantName, networkName, serviceName string, nwCfg *mastercfg.CfgNetworkState) error {
 	var nwID string
@@ -105,7 +87,7 @@ func CreateDockNet(tenantName, networkName, serviceName string, nwCfg *mastercfg
 	}
 
 	// Trim default tenant name
-	docknetName := GetDocknetName(tenantName, networkName, serviceName)
+	docknetName := GetDocknetName(tenantName, networkName, "", serviceName)
 
 	// connect to docker
 	docker, err := dockerclient.NewDockerClient("unix:///var/run/docker.sock", nil)
@@ -202,7 +184,7 @@ func CreateDockNet(tenantName, networkName, serviceName string, nwCfg *mastercfg
 // DeleteDockNet deletes a network in docker daemon
 func DeleteDockNet(tenantName, networkName, serviceName string) error {
 	// Trim default tenant name
-	docknetName := GetDocknetName(tenantName, networkName, serviceName)
+	docknetName := GetDocknetName(tenantName, networkName, "", serviceName)
 
 	// connect to docker
 	docker, err := dockerclient.NewDockerClient("unix:///var/run/docker.sock", nil)
@@ -261,4 +243,97 @@ func FindDocknetByUUID(dnetID string) (*DnetOperState, error) {
 	}
 
 	return nil, errors.New("docknet UUID not found")
+}
+
+// GetDocknetName gets tenant, network, epg and service name
+// Encoding format: service.{epg|network}.tenant
+func GetDocknetName(tenant string, network string, epg string, service string) string {
+
+	docknetName := ""
+
+	// if epg is specified, always use that, else use nw
+	if epg == "" {
+		docknetName = network
+	} else {
+		docknetName = epg
+	}
+
+	// add tenant suffix if not the default tenant
+	if tenant != defaultTenantName {
+		docknetName = docknetName + "." + tenant
+	}
+
+	// add service prefix if specified
+	if service != "" {
+		docknetName = service + docknetName
+	}
+	return docknetName
+}
+
+// ParseDocknetName gets tenant, service and network name
+func ParseDocknetName(nwName string) (string, string, string, error) {
+	// parse the network name
+	var tenantName, netName, serviceName string
+	log.Debugf("Parsing nwName: %s", nwName)
+	if nwName == "" {
+		log.Errorf("Invalid network name format for network %s", nwName)
+		return "", "", "", errors.New("Invalid format")
+	}
+	if strings.Contains(nwName, "/") {
+		names := strings.Split(nwName, "/")
+		if len(names) == 2 {
+			// has service.network/tenant format.
+			tenantName = names[1]
+
+			// parse service and network names
+			sNames := strings.Split(names[0], ".")
+			if len(sNames) == 2 {
+				// has service.network format
+				netName = sNames[1]
+				serviceName = sNames[0]
+			} else {
+				netName = sNames[0]
+			}
+		} else if len(names) == 1 {
+			// has service.network in default tenant
+			tenantName = defaultTenantName
+
+		} else {
+			log.Errorf("Invalid network name format for network %s", nwName)
+			return "", "", "", errors.New("Invalid format")
+		}
+		// parse service and network names from service.network
+		sNames := strings.Split(names[0], ".")
+		if len(sNames) == 2 {
+			// has service.network format
+			netName = sNames[1]
+			serviceName = sNames[0]
+		} else {
+			netName = sNames[0]
+		}
+	} else {
+		names := strings.Split(nwName, ".")
+		// parse tenant name
+		if len(names) == 2 {
+			// has service__network.tenant format.
+			tenantName = names[1]
+		} else if len(names) == 1 {
+			// has service__network in default tenant
+			tenantName = defaultTenantName
+		} else {
+			log.Errorf("Invalid network name format for network %s", nwName)
+			return "", nwName, "", errors.New("Invalid format")
+		}
+		// parse service and network names from service__network
+		sNames := strings.Split(names[0], "__")
+		if len(sNames) == 2 {
+			// has service.network format
+			netName = sNames[1]
+			serviceName = sNames[0]
+		} else {
+			// network name in default tenant
+			netName = sNames[0]
+		}
+	}
+	return tenantName, netName, serviceName, nil
 }

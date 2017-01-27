@@ -383,6 +383,55 @@ func leave(w http.ResponseWriter, r *http.Request) {
 	w.Write(content)
 }
 
+func networkAllocate(w http.ResponseWriter, r *http.Request) {
+	resp := api.AllocateNetworkResponse{}
+
+	content, err := json.Marshal(resp)
+	if err != nil {
+		httpError(w, "Could not generate a response", err)
+		return
+	}
+
+	w.Write(content)
+	return
+}
+func networkFree(w http.ResponseWriter, r *http.Request) {
+	resp := api.FreeNetworkResponse{}
+
+	content, err := json.Marshal(resp)
+	if err != nil {
+		httpError(w, "Could not generate a response", err)
+		return
+	}
+
+	w.Write(content)
+	return
+}
+func programExternalConnectivity(w http.ResponseWriter, r *http.Request) {
+	resp := api.ProgramExternalConnectivityResponse{}
+
+	content, err := json.Marshal(resp)
+	if err != nil {
+		httpError(w, "Could not generate a response", err)
+		return
+	}
+
+	w.Write(content)
+	return
+}
+func revokeExternalConnectivity(w http.ResponseWriter, r *http.Request) {
+	resp := api.RevokeExternalConnectivityResponse{}
+
+	content, err := json.Marshal(resp)
+	if err != nil {
+		httpError(w, "Could not generate a response", err)
+		return
+	}
+
+	w.Write(content)
+	return
+}
+
 func netdGetEndpoint(epID string) (*drivers.OvsOperEndpointState, error) {
 	// Get hold of the state driver
 	stateDriver, err := utils.GetStateDriver()
@@ -446,43 +495,7 @@ func GetDockerNetworkName(nwID string) (string, string, string, error) {
 		log.Debugf("%+v", nw)
 		if nw.ID == nwID {
 			log.Infof("Returning network name %s for ID %s", nw.Name, nwID)
-
-			// parse the network name
-			var tenantName, netName, serviceName string
-			names := strings.Split(nw.Name, "/")
-			if len(names) == 2 {
-				// has service.network/tenant format.
-				tenantName = names[1]
-
-				// parse service and network names
-				sNames := strings.Split(names[0], ".")
-				if len(sNames) == 2 {
-					// has service.network format
-					netName = sNames[1]
-					serviceName = sNames[0]
-				} else {
-					netName = sNames[0]
-				}
-			} else if len(names) == 1 {
-				// has ser.network in default tenant
-				tenantName = defaultTenantName
-
-				// parse service and network names
-				sNames := strings.Split(names[0], ".")
-				if len(sNames) == 2 {
-					// has service.network format
-					netName = sNames[1]
-					serviceName = sNames[0]
-				} else {
-					netName = sNames[0]
-				}
-			} else {
-				log.Errorf("Invalid network name format for network %s", nw.Name)
-				return "", "", "", errors.New("Invalid format")
-			}
-
-			return tenantName, netName, serviceName, nil
-
+			return docknet.ParseDocknetName(nw.Name)
 		}
 	}
 

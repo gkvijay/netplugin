@@ -59,22 +59,26 @@ func InitDockPlugin(np *plugin.NetPlugin, sp svcplugin.SvcregPlugin) error {
 	s := router.Methods("POST").Subrouter()
 
 	dispatchMap := map[string]func(http.ResponseWriter, *http.Request){
-		"/Plugin.Activate":                    activate(hostname),
-		"/Plugin.Deactivate":                  deactivate(hostname),
-		"/NetworkDriver.GetCapabilities":      getCapability,
-		"/NetworkDriver.CreateNetwork":        createNetwork,
-		"/NetworkDriver.DeleteNetwork":        deleteNetwork,
-		"/NetworkDriver.CreateEndpoint":       createEndpoint(hostname),
-		"/NetworkDriver.DeleteEndpoint":       deleteEndpoint(hostname),
-		"/NetworkDriver.EndpointOperInfo":     endpointInfo,
-		"/NetworkDriver.Join":                 join,
-		"/NetworkDriver.Leave":                leave,
-		"/IpamDriver.GetDefaultAddressSpaces": getDefaultAddressSpaces,
-		"/IpamDriver.RequestPool":             requestPool,
-		"/IpamDriver.ReleasePool":             releasePool,
-		"/IpamDriver.RequestAddress":          requestAddress,
-		"/IpamDriver.ReleaseAddress":          releaseAddress,
-		"/IpamDriver.GetCapabilities":         getIpamCapability,
+		"/Plugin.Activate":                           activate(hostname),
+		"/Plugin.Deactivate":                         deactivate(hostname),
+		"/NetworkDriver.GetCapabilities":             getCapability,
+		"/NetworkDriver.CreateNetwork":               createNetwork,
+		"/NetworkDriver.DeleteNetwork":               deleteNetwork,
+		"/NetworkDriver.CreateEndpoint":              createEndpoint(hostname),
+		"/NetworkDriver.DeleteEndpoint":              deleteEndpoint(hostname),
+		"/NetworkDriver.EndpointOperInfo":            endpointInfo,
+		"/NetworkDriver.Join":                        join,
+		"/NetworkDriver.Leave":                       leave,
+		"/NetworkDriver.NetworkAllocate":             networkAllocate,
+		"/NetworkDriver.NetworkFree":                 networkFree,
+		"/NetworkDriver.ProgramExternalConnectivity": programExternalConnectivity,
+		"/NetworkDriver.RevokeExternalConnectivity":  revokeExternalConnectivity,
+		"/IpamDriver.GetDefaultAddressSpaces":        getDefaultAddressSpaces,
+		"/IpamDriver.RequestPool":                    requestPool,
+		"/IpamDriver.ReleasePool":                    releasePool,
+		"/IpamDriver.RequestAddress":                 requestAddress,
+		"/IpamDriver.ReleaseAddress":                 releaseAddress,
+		"/IpamDriver.GetCapabilities":                getIpamCapability,
 	}
 
 	for dispatchPath, dispatchFunc := range dispatchMap {
@@ -146,7 +150,7 @@ func unknownAction(w http.ResponseWriter, r *http.Request) {
 	log.Infof("Unknown networkdriver action at %q", r.URL.Path)
 	content, _ := ioutil.ReadAll(r.Body)
 	log.Infof("Body content: %s", string(content))
-	http.NotFound(w, r)
+	http.Error(w, string(content), http.StatusNotImplemented)
 }
 
 // deactivate the plugin

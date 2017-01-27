@@ -58,7 +58,7 @@ func getDocknetState(tenantName, networkName, serviceName string) *DnetOperState
 }
 
 func checkDocknetCreate(t *testing.T, tenantName, networkName, serviceName, subnet, gw string) {
-	docknetName := GetDocknetName(tenantName, networkName, serviceName)
+	docknetName := GetDocknetName(tenantName, networkName, "", serviceName)
 	subnetIP, subnetLen, _ := netutils.ParseCIDR(subnet)
 
 	nwcfg := mastercfg.CfgNetworkState{
@@ -113,7 +113,7 @@ func checkDocknetCreate(t *testing.T, tenantName, networkName, serviceName, subn
 }
 
 func checkDocknetCreateIPv6(t *testing.T, tenantName, networkName, serviceName, subnet, gw, ipv6subnet, ipv6gw string) {
-	docknetName := GetDocknetName(tenantName, networkName, serviceName)
+	docknetName := GetDocknetName(tenantName, networkName, "", serviceName)
 	subnetIP, subnetLen, _ := netutils.ParseCIDR(subnet)
 	ipv6subnetAddr, ipv6subnetLen, _ := netutils.ParseCIDR(ipv6subnet)
 
@@ -176,7 +176,7 @@ func checkDocknetCreateIPv6(t *testing.T, tenantName, networkName, serviceName, 
 }
 
 func checkDocknetDelete(t *testing.T, tenantName, networkName, serviceName string) {
-	docknetName := GetDocknetName(tenantName, networkName, serviceName)
+	docknetName := GetDocknetName(tenantName, networkName, "", serviceName)
 
 	// delete the docknet
 	err := DeleteDockNet(tenantName, networkName, serviceName)

@@ -16,10 +16,9 @@ limitations under the License.
 package agent
 
 import (
-	"strings"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/netplugin/mgmtfn/dockplugin"
+	"github.com/contiv/netplugin/netmaster/docknet"
 	"github.com/contiv/netplugin/netmaster/master"
 	"github.com/contiv/netplugin/netplugin/cluster"
 	"github.com/docker/engine-api/client"
@@ -110,10 +109,7 @@ func getTenantFromContainerInspect(containerInfo *types.ContainerJSON) string {
 	tenant := "default"
 	if containerInfo != nil && containerInfo.NetworkSettings != nil {
 		for network := range containerInfo.NetworkSettings.Networks {
-			if strings.Contains(network, "/") {
-				//network name is of the form networkname/tenantname for non default tenant
-				tenant = strings.Split(network, "/")[1]
-			}
+			tenant, _, _, _ = docknet.ParseDocknetName(network)
 		}
 	}
 	return tenant

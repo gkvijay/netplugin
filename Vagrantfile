@@ -67,7 +67,13 @@ else
     # cleanup openstack-kilo repo if required
     yum remove docker-engine -y || :
     yum-config-manager --disable openstack-kilo
-    curl https://get.docker.com | sed s/docker-engine/docker-engine-#{docker_version}/ | bash
+    if [[ #{docker_version} == *"rc"* ]]; then
+        echo "Getting pre-release docker version #{docker_version} "
+        curl -fsSL https://test.docker.com/ | sh
+    else
+        echo "Getting released docker version #{docker_version} "
+        curl https://get.docker.com | sed s/docker-engine/docker-engine-#{docker_version}/ | bash
+    fi
 fi
 
 # setup docker cluster store

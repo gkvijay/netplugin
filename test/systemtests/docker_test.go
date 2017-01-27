@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/contiv/netplugin/mgmtfn/dockplugin"
 )
 
 type intf struct {
@@ -61,7 +62,7 @@ func (d *docker) runContainer(spec containerSpec) (*container, error) {
 			netstr = spec.serviceName
 		}
 		if spec.tenantName != "" && spec.tenantName != "default" {
-			netstr = netstr + "/" + spec.tenantName
+			netstr = dockplugin.ComposeDockerNetworkName(spec.tenantName, netstr, "", "")
 		}
 
 		netstr = "--net=" + netstr

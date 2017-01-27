@@ -227,7 +227,7 @@ func registerService(objClient objdb.API, ctrlIP, vtepIP, hostname string) error
 		return err
 	}
 
-	// netplugn VTEP service info
+	// netplugin VTEP service info
 	srvInfo = objdb.ServiceInfo{
 		ServiceName: "netplugin.vtep",
 		TTL:         10,

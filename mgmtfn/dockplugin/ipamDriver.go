@@ -81,12 +81,10 @@ func requestPool(w http.ResponseWriter, r *http.Request) {
 	PoolID := preq.Pool
 
 	// Docker 1.10+ supports IPAM options. so, we pass the network id as pool-id
-	// In docker 1.9, we pass the address pool back as pool id
-	// HACK alert: This is very fragile. SImplify this when we stop supporting docker 1.9
 	tenant, okt := preq.Options["tenant"]
 	network, okn := preq.Options["network"]
 	if okt && okn {
-		PoolID = network + "." + tenant + "|" + preq.Pool
+		PoolID = network + "." + tenant + "--" + preq.Pool
 	}
 	presp := api.RequestPoolResponse{
 		PoolID: PoolID,
@@ -165,10 +163,12 @@ func requestAddress(w http.ResponseWriter, r *http.Request) {
 	subnetLen := strings.Split(areq.PoolID, "/")[1]
 
 	// check if pool id contains address pool or network id
-	// HACK alert: This is very fragile. Simplify this when we stop supporting docker 1.9
 	if strings.Contains(areq.PoolID, "|") {
 		addrPool = strings.Split(areq.PoolID, "|")[1]
 		networkID = strings.Split(areq.PoolID, "|")[0]
+	} else if strings.Contains(areq.PoolID, "--") {
+		addrPool = strings.Split(areq.PoolID, "--")[1]
+		networkID = strings.Split(areq.PoolID, "--")[0]
 	}
 
 	// Build an alloc request to be sent to master
@@ -189,11 +189,6 @@ func requestAddress(w http.ResponseWriter, r *http.Request) {
 			// simply return a dummy address
 			addr = addrPool
 		}
-	} else if areq.Address != "" {
-		// This is a special case for docker 1.9 gateway request which does not
-		// come with 'RequestAddressType' label
-		// FIXME: Remove this hack when we stop supporting docker 1.9
-		addr = areq.Address + "/" + subnetLen
 	} else {
 		// Make a REST call to master
 		var allocResp master.AddressAllocResponse

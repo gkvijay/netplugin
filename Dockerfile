@@ -38,5 +38,7 @@ WORKDIR /go/src/github.com/contiv/netplugin/
 
 RUN make build
 
+RUN mkdir -p /run/docker/plugins
+
 ENTRYPOINT ["netplugin"]
 CMD ["--help"]
