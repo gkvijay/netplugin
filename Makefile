@@ -318,6 +318,9 @@ host-plugin-release:
 	@echo dev: need docker login with user in contiv org
 	docker plugin push ${CONTIV_V2PLUGIN_NAME}
 
+v2plugin-test: demo-v2plugin
+	go test -v -timeout 480m ./test/systemtests -check.v -check.abort -check.f "Basic"
+
 # GITHUB_USER and GITHUB_TOKEN are needed be set to run github-release
 release:
 	OLD_VERSION=${OLD_VERSION} BUILD_VERSION=${BUILD_VERSION} \

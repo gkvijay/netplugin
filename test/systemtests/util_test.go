@@ -1201,12 +1201,14 @@ func (s *systemtestSuite) SetUpSuiteBaremetal(c *C) {
 				node.exec = s.NewK8sExec(node)
 			case swarmScheduler:
 				node.exec = s.NewSwarmExec(node)
+			case swarmV2Scheduler:
+				logrus.Infof("LOADING SWARM V2 PLUGIN !!! ")
+				node.exec = s.NewSwarmV2Exec(node)
 			default:
 				node.exec = s.NewDockerExec(node)
 			}
 			s.nodes = append(s.nodes, node)
 		}
-		//s.nodes = append(s.nodes, &node{tbnode: nodeObj, suite: s})
 	}
 	logrus.Info("Pulling alpine on all nodes")
 	s.baremetal.IterateNodes(func(node remotessh.TestbedNode) error {
@@ -1283,13 +1285,13 @@ func (s *systemtestSuite) SetUpSuiteVagrant(c *C) {
 			c.Assert(s.vagrant.Setup(false, append([]string{}, s.basicInfo.SwarmEnv), contivNodes), IsNil)
 		default:
 			c.Assert(s.vagrant.Setup(false, []string{}, contivNodes), IsNil)
-
 		}
-
 	}
 
 	for _, nodeObj := range s.vagrant.GetNodes() {
+
 		nodeName := nodeObj.GetName()
+		logrus.Infof("THE NODE NAME IS %s",nodeName)
 		if strings.Contains(nodeName, "netplugin-node") ||
 			strings.Contains(nodeName, "k8") {
 			node := &node{}
@@ -1304,6 +1306,9 @@ func (s *systemtestSuite) SetUpSuiteVagrant(c *C) {
 				}
 			case swarmScheduler:
 				node.exec = s.NewSwarmExec(node)
+			case "v2-swarm":
+				logrus.Infof("LOADING !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+				node.exec = s.NewSwarmV2Exec(node)
 			default:
 				node.exec = s.NewDockerExec(node)
 			}
@@ -1424,16 +1429,15 @@ func (s *systemtestSuite) SetUpTestVagrant(c *C) {
 	}
 
 	time.Sleep(5 * time.Second)
-
 	if s.basicInfo.Scheduler != kubeScheduler {
-		for i := 0; i < 21; i++ {
-
+		for i := 0; i < 50; i++ {
 			_, err := s.cli.TenantGet("default")
 			if err == nil {
 				break
 			}
+			logrus.Errorf("The error is %s",err)
 			// Fail if we reached last iteration
-			c.Assert((i < 30), Equals, true)
+			c.Assert((i < 50), Equals, true)
 			time.Sleep(1 * time.Second)
 		}
 	}

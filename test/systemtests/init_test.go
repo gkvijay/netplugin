@@ -4,7 +4,6 @@ import (
 	"flag"
 	"os"
 	. "testing"
-
 	"github.com/Sirupsen/logrus"
 	. "github.com/contiv/check"
 	"github.com/contiv/contivmodel/client"
@@ -58,6 +57,7 @@ type GlobInfo struct {
 const (
 	kubeScheduler  string = "k8s"
 	swarmScheduler string = "swarm"
+	swarmV2Scheduler string = "swarm-v2"
 	legacyInstall  string = "legacy"
 	kubeadmInstall string = "kubeadm"
 )
