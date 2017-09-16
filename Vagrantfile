@@ -105,11 +105,14 @@ elif [[ "$reinstall" -eq 1 ]] && [[ "#{legacy_docker}" -eq 1 ]]; then
 elif [[ "$reinstall" -eq 1 ]]; then
     yum remove docker-engine -y || :
     yum remove docker-ce || :
-    yum-config-manager --disable openstack-kilo
-    yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-    yum-config-manager --enable docker-ce-stable
-    yum makecache fast
-    yum install -y docker-ce-#{docker_version}
+    #yum-config-manager --disable openstack-kilo
+    #yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    #yum-config-manager --enable docker-ce-stable
+    #yum makecache fast
+    #yum install -y docker-ce-#{docker_version}
+    echo "Downloading docker rpm for version #{docker_version} "
+    wget -nv https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-#{docker_version}-1.el7.centos.x86_64.rpm
+    yum install -y ./docker-ce-#{docker_version}-1.el7.centos.x86_64.rpm
 fi
 
 # setup docker cluster store
