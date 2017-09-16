@@ -124,7 +124,12 @@ else
     then
         perl -i -lpe 's!^ExecStart(.+)$!ExecStart$1 -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --cluster-store=consul://localhost:8500!' /lib/systemd/system/docker.service
     else
-        perl -i -lpe 's!^ExecStart(.+)$!ExecStart$1 -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --cluster-store=etcd://localhost:2379!' /lib/systemd/system/docker.service
+        if [[ "$CONTIV_CLUSTER_STORE" == *"etcd:"* ]]
+        then
+            perl -i -lpe 's!^ExecStart(.+)$!ExecStart$1 -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --cluster-store=etcd://localhost:2379!' /lib/systemd/system/docker.service
+        else 
+            perl -i -lpe 's!^ExecStart(.+)$!ExecStart$1 -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock' /lib/systemd/system/docker.service
+        fi
     fi
 fi
 
@@ -390,14 +395,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                 s.args = [node_addr]
             end
 
-            node_provision_script = provision_node % {
-                node_name: node_name,
-                node_addr: node_addr,
-                node_peers: node_peers.join(","),
-                gopath_folder: gopath_folder,
-                consul_join_flag: consul_join_flag,
-                consul_bootstrap_flag: consul_bootstrap_flag,
-            }
+            if [[ ENV["CONTIV_CLUSTER_STORE"] != "none" ]]
+                node_provision_script = provision_node % {
+                    node_name: node_name,
+                    node_addr: node_addr,
+                    node_peers: node_peers.join(","),
+                    gopath_folder: gopath_folder,
+                    consul_join_flag: consul_join_flag,
+                    consul_bootstrap_flag: consul_bootstrap_flag,
+                }
+            end
 
             node.vm.provision "shell" do |s|
                 s.inline = node_provision_script
